@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # QUIC Server
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quic-zig-server
+    environment:
+      - ROLE=server
+      - TESTCASE=${TESTCASE:-handshake}
+      - WWW=/www
+      - CERT=/certs/cert.pem
+      - KEY=/certs/priv.key
+      - QLOGDIR=/logs
+      - SSLKEYLOGFILE=/logs/keys.log
+    volumes:
+      - ./test-data/www:/www:ro
+      - ./test-data/certs:/certs:ro
+      - ./test-data/logs:/logs
+    ports:
+      - "443:443/udp"
+    networks:
+      - quic-test
+
+  # QUIC Client
+  client:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: quic-zig-client
+    environment:
+      - ROLE=client
+      - TESTCASE=${TESTCASE:-handshake}
+      - REQUESTS=${REQUESTS:-https://server:443/index.html}
+      - DOWNLOADS=/downloads
+      - QLOGDIR=/logs
+      - SSLKEYLOGFILE=/logs/keys.log
+    volumes:
+      - ./test-data/downloads:/downloads
+      - ./test-data/logs:/logs
+    networks:
+      - quic-test
+    depends_on:
+      - server
+
+networks:
+  quic-test:
+    driver: bridge
