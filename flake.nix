@@ -123,32 +123,6 @@
             echo "  1. Build:     zig build"
             echo "  2. Test:      test-interop"
             echo ""
-            echo "For Docker Hub:"
-            echo "  docker-login    - Login to Docker Hub"
-            echo "  docker-publish  - Publish image"
-            echo ""
-          '')
-          (pkgs.writeScriptBin "docker-login" ''
-            #!/usr/bin/env bash
-            echo "Logging in to Docker Hub as l1ne..."
-            docker login -u l1ne
-          '')
-          (pkgs.writeScriptBin "docker-publish" ''
-            #!/usr/bin/env bash
-            echo "Building binaries with Zig..."
-            zig build -Doptimize=ReleaseFast
-
-            echo "Building Docker image..."
-            docker build -t l1ne/quic-zig:latest .
-
-            echo "Pushing to Docker Hub (l1ne/quic-zig:latest)..."
-            docker push l1ne/quic-zig:latest
-
-            echo ""
-            echo "✓ Image published successfully!"
-            echo "  Repository: https://hub.docker.com/r/l1ne/quic-zig"
-            echo ""
-            echo "You can now run: test-interop"
           '')
           (pkgs.writeScriptBin "test-interop" ''
             #!/usr/bin/env bash
@@ -194,12 +168,6 @@
             echo "  zig build        - Build all binaries"
             echo "  test-interop     - Run QUIC interop tests"
             echo "  zig build test   - Run unit tests"
-            echo ""
-            echo "Docker Hub:"
-            echo "  docker-login     - Login to Docker Hub (l1ne)"
-            echo "  docker-publish   - Build and publish"
-            echo ""
-            echo "Other:"
             echo "  setup            - Re-run setup if needed"
             echo ""
           fi
