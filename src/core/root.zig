@@ -9,6 +9,11 @@
 
 const std = @import("std");
 
+// Export UDP socket implementation
+pub const udp = @import("udp.zig");
+pub const UdpSocket = udp.UdpSocket;
+pub const RecvResult = udp.RecvResult;
+
 // TODO: Implement QUIC protocol core
 // For now, export placeholder types
 
@@ -29,5 +34,7 @@ pub fn init() void {
 }
 
 test "core module" {
+    std.debug.print("\n=== Core Module Tests ===\n", .{});
     try std.testing.expect(true);
+    std.debug.print("✓ Core module test passed\n", .{});
 }

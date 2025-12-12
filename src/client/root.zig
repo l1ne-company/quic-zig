@@ -31,5 +31,7 @@ pub const Client = struct {
 };
 
 test "client module" {
+    std.debug.print("\n=== Client Module Tests ===\n", .{});
     try std.testing.expect(true);
+    std.debug.print("✓ Client module test passed\n", .{});
 }

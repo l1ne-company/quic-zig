@@ -31,5 +31,7 @@ pub const ConnectionId = struct {
 };
 
 test "utils module" {
+    std.debug.print("\n=== Utils Module Tests ===\n", .{});
     try std.testing.expect(true);
+    std.debug.print("✓ Utils module test passed\n", .{});
 }

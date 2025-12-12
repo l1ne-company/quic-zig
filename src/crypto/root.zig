@@ -39,5 +39,7 @@ pub const HeaderProtection = struct {
 };
 
 test "crypto module" {
+    std.debug.print("\n=== Crypto Module Tests ===\n", .{});
     try std.testing.expect(true);
+    std.debug.print("✓ Crypto module test passed\n", .{});
 }

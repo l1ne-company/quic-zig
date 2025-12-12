@@ -47,5 +47,7 @@ pub fn add(a: i32, b: i32) i32 {
 }
 
 test "basic add functionality" {
+    std.debug.print("\n=== Main Module Tests ===\n", .{});
     try std.testing.expect(add(3, 7) == 10);
+    std.debug.print("✓ Main module test passed\n", .{});
 }

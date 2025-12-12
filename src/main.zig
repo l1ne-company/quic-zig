@@ -2,26 +2,47 @@ const std = @import("std");
 const quic_zig = @import("quic_zig");
 
 pub fn main() !void {
-    // Prints to stderr, ignoring potential errors.
-    std.debug.print("All your {s} are belong to us.\n", .{"codebase"});
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    defer _ = gpa.deinit();
+    const allocator = gpa.allocator();
+
     try quic_zig.bufferedPrint();
+    // Test UDP socket
+    std.debug.print("\nTesting UDP Socket...\n", .{});
+    try testUdp(allocator);
 }
 
-test "simple test" {
-    const gpa = std.testing.allocator;
-    var list: std.ArrayList(i32) = .empty;
-    defer list.deinit(gpa); // Try commenting this out and see if zig detects the memory leak!
-    try list.append(gpa, 42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
-}
+pub fn testUdp(allocator: std.mem.Allocator) !void {
+    const UdpSocket = quic_zig.core.UdpSocket;
 
-test "fuzz example" {
-    const Context = struct {
-        fn testOne(context: @This(), input: []const u8) anyerror!void {
-            _ = context;
-            // Try passing `--fuzz` to `zig build test` and see if it manages to fail this test case!
-            try std.testing.expect(!std.mem.eql(u8, "canyoufindme", input));
+    // Create sender and receiver sockets
+    var sender = try UdpSocket.init(allocator);
+    defer sender.deinit();
+
+    var receiver = try UdpSocket.init(allocator);
+    defer receiver.deinit();
+
+    // Bind receiver to localhost with dynamic port
+    try receiver.bind("127.0.0.1", 0);
+    std.debug.print("Receiver bound successfully\n", .{});
+
+    // Get receiver's address
+    var addr: std.posix.sockaddr.storage = undefined;
+    var addr_len: std.posix.socklen_t = @sizeOf(std.posix.sockaddr.storage);
+    try std.posix.getsockname(receiver.fd, @ptrCast(&addr), &addr_len);
+    const receiver_addr = std.net.Address.initPosix(@ptrCast(@alignCast(&addr)));
+
+    // Send message
+    const message = "poggers!";
+    const bytes_sent = try sender.send(message, receiver_addr);
+    std.debug.print("Sent {d} bytes: {s}\n", .{ bytes_sent, message });
+    var buffer: [1024]u8 = undefined;
+    const result = receiver.recv(&buffer) catch |err| {
+        if (err == error.WouldBlock) {
+            std.debug.print("No message received (WouldBlock)\n", .{});
+            return;
         }
+        return err;
     };
-    try std.testing.fuzz(Context{}, Context.testOne, .{});
+    std.debug.print("Received {d} bytes: {s}\n", .{ result.bytes, buffer[0..result.bytes] });
 }

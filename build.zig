@@ -47,7 +47,8 @@ pub fn build(b: *std.Build) void {
     _ = buildExecutable(b, "quic_endpoint", "src/endpoint.zig", target, optimize, null);
 
     // Build tests
-    buildTests(b, modules.main, exe.root_module);
+    const test_step = buildTestSteps(b, modules);
+    buildExeTests(b, exe.root_module, test_step);
 
     // Build run steps
     buildRunSteps(b, exe, server_exe, client_exe);
@@ -164,26 +165,48 @@ fn buildMainExecutable(
     return buildExecutable(b, "quic_zig", "src/main.zig", target, optimize, module);
 }
 
-/// Build and register all tests
-fn buildTests(
-    b: *std.Build,
-    main_module: *std.Build.Module,
-    exe_module: *std.Build.Module,
-) void {
-    const mod_tests = b.addTest(.{
-        .root_module = main_module,
-    });
+/// Build and register isolated module tests
+fn buildTestSteps(b: *std.Build, modules: Modules) *std.Build.Step {
+    const modules_info: []const struct { name: []const u8, display_name: []const u8, module: *std.Build.Module } = &.{
+        .{ .name = "core", .display_name = "Core QUIC protocol module", .module = modules.core },
+        .{ .name = "client", .display_name = "Client module", .module = modules.client },
+        .{ .name = "server", .display_name = "Server module", .module = modules.server },
+        .{ .name = "crypto", .display_name = "Crypto module", .module = modules.crypto },
+        .{ .name = "utils", .display_name = "Utils module", .module = modules.utils },
+        .{ .name = "main", .display_name = "Main module", .module = modules.main },
+    };
 
-    const run_mod_tests = b.addRunArtifact(mod_tests);
+    const test_step = b.step("test", "Run all tests");
 
+    for (modules_info) |mod_info| {
+        const test_artifact = b.addTest(.{
+            .root_module = mod_info.module,
+        });
+
+        const run_test = b.addRunArtifact(test_artifact);
+
+        const step_name = b.fmt("test-{s}", .{mod_info.name});
+        const step_desc = b.fmt("Run tests for {s}", .{mod_info.display_name});
+        const mod_test_step = b.step(step_name, step_desc);
+        mod_test_step.dependOn(&run_test.step);
+
+        test_step.dependOn(&run_test.step);
+    }
+
+    return test_step;
+}
+
+/// Build and register executable tests
+fn buildExeTests(b: *std.Build, exe_module: *std.Build.Module, test_step: *std.Build.Step) void {
     const exe_tests = b.addTest(.{
         .root_module = exe_module,
     });
 
     const run_exe_tests = b.addRunArtifact(exe_tests);
 
-    const test_step = b.step("test", "Run tests");
-    test_step.dependOn(&run_mod_tests.step);
+    const exe_test_step = b.step("test-exe", "Run executable tests");
+    exe_test_step.dependOn(&run_exe_tests.step);
+
     test_step.dependOn(&run_exe_tests.step);
 }
 
