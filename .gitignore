@@ -17,6 +17,15 @@ __pycache__/
 *.so
 .Python
 
+# Interop runner generated files
+quic-interop-runner-tests/.venv/
+quic-interop-runner-tests/__pycache__/
+quic-interop-runner-tests/logs_*/
+quic-interop-runner-tests/test-data/
+quic-interop-runner-tests/.setup-complete
+quic-interop-runner-tests/implementations.json.bak
+quic-interop-runner-tests/quic-interop-runner-tests/
+
 # Docker
 .dockerignore
 

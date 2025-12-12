@@ -1,5 +1,29 @@
 const std = @import("std");
 
+/// List of supported test cases
+/// See: https://github.com/quic-interop/quic-interop-runner
+const SUPPORTED_TEST_CASES = [_][]const u8{
+    "handshake",
+    "transfer",
+    "retry",
+    "http3",
+    "multiconnect",
+    "zerortt",
+    "resumption",
+    "chacha20",
+    "keyupdate",
+    "v2",
+};
+
+fn isTestCaseSupported(testcase: []const u8) bool {
+    for (SUPPORTED_TEST_CASES) |supported| {
+        if (std.mem.eql(u8, testcase, supported)) {
+            return true;
+        }
+    }
+    return false;
+}
+
 pub fn main() !void {
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
     defer _ = gpa.deinit();
@@ -35,6 +59,15 @@ pub fn main() !void {
     std.debug.print("Role: {s}\n", .{role});
     std.debug.print("Testcase: {s}\n", .{testcase orelse "none"});
 
+    // Check if test case is supported
+    if (testcase) |tc| {
+        const supported = isTestCaseSupported(tc);
+        if (!supported) {
+            std.debug.print("Test case '{s}' is not supported\n", .{tc});
+            std.process.exit(127); // Exit with 127 for unsupported test cases
+        }
+    }
+
     if (std.mem.eql(u8, role, "client")) {
         // Client mode - wait for simulator
         std.debug.print("Waiting for simulator to start...\n", .{});
@@ -62,7 +95,6 @@ pub fn main() !void {
         // Execute client
         const argv = [_][]const u8{"/usr/local/bin/quic_client"};
         return std.process.execve(allocator, &argv, null);
-
     } else if (std.mem.eql(u8, role, "server")) {
         // Server mode
         std.debug.print("Starting QUIC server on port 443\n", .{});
@@ -74,7 +106,6 @@ pub fn main() !void {
         // Execute server
         const argv = [_][]const u8{"/usr/local/bin/quic_server"};
         return std.process.execve(allocator, &argv, null);
-
     } else {
         std.debug.print("Unknown ROLE: {s}\n", .{role});
         std.process.exit(1);
