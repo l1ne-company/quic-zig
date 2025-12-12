@@ -52,21 +52,21 @@
 
             # 1. Create test data directories
             echo "1. Creating test directories..."
-            mkdir -p test-data/{www,downloads,certs,logs}
+            mkdir -p quic-interop-runner-tests/test-data/{www,downloads,certs,logs}
             echo "   ✓ Created test-data directories"
 
             # 2. Generate certificates if needed
-            if [ ! -f test-data/certs/cert.pem ]; then
+            if [ ! -f quic-interop-runner-tests/test-data/certs/cert.pem ]; then
               echo ""
               echo "2. Generating test certificates..."
               ${pkgs.openssl}/bin/openssl req -x509 -newkey rsa:2048 -nodes \
-                -keyout test-data/certs/priv.key \
-                -out test-data/certs/cert.pem \
+                -keyout quic-interop-runner-tests/test-data/certs/priv.key \
+                -out quic-interop-runner-tests/test-data/certs/cert.pem \
                 -days 365 \
                 -subj "/CN=server/O=QuicZig/C=US" \
                 -addext "subjectAltName=DNS:server,DNS:localhost,IP:127.0.0.1" 2>/dev/null
-              chmod 600 test-data/certs/priv.key
-              chmod 644 test-data/certs/cert.pem
+              chmod 600 quic-interop-runner-tests/test-data/certs/priv.key
+              chmod 644 quic-interop-runner-tests/test-data/certs/cert.pem
               echo "   ✓ Generated test certificates"
             else
               echo ""
@@ -76,9 +76,9 @@
             # 3. Create test files
             echo ""
             echo "3. Creating test files..."
-            echo "Hello from QUIC server!" > test-data/www/index.html
-            echo "This is a test file for QUIC transfer." > test-data/www/test.txt
-            dd if=/dev/urandom of=test-data/www/large.bin bs=1M count=1 2>/dev/null
+            echo "Hello from QUIC server!" > quic-interop-runner-tests/test-data/www/index.html
+            echo "This is a test file for QUIC transfer." > quic-interop-runner-tests/test-data/www/test.txt
+            dd if=/dev/urandom of=quic-interop-runner-tests/test-data/www/large.bin bs=1M count=1 2>/dev/null
             echo "   ✓ Created test files"
 
             # 4. Initialize quic-interop-runner submodule
@@ -90,7 +90,7 @@
             # 5. Setup Python environment with uv
             echo ""
             echo "5. Setting up Python environment with uv..."
-            cd quic-interop-runner
+            cd quic-interop-runner-tests
 
             # Use uv to sync dependencies
             ${pkgs.uv}/bin/uv venv
@@ -109,8 +109,6 @@
               echo "   ✓ quic-zig already in implementations.json"
             fi
 
-            cd ..
-
             # 7. Create setup marker
             touch .setup-complete
 
@@ -126,13 +124,13 @@
           '')
           (pkgs.writeScriptBin "test-interop" ''
             #!/usr/bin/env bash
-            if [ ! -d quic-interop-runner ]; then
-              echo "Error: quic-interop-runner not found"
+            if [ ! -d quic-interop-runner-tests ]; then
+              echo "Error: quic-interop-runner-tests not found"
               echo "Run: setup"
               exit 1
             fi
 
-            if [ ! -d quic-interop-runner/.venv ]; then
+            if [ ! -d quic-interop-runner-tests/.venv ]; then
               echo "Error: Python venv not found"
               echo "Run: setup"
               exit 1
@@ -145,7 +143,7 @@
             docker build -t l1ne/quic-zig:latest .
 
             echo "Running interop tests..."
-            cd quic-interop-runner
+            cd quic-interop-runner-tests
 
             # Use venv's python directly (installed by uv)
             .venv/bin/python run.py -s quic-zig -c quic-zig "$@"

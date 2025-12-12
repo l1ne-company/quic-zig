@@ -1,7 +1,0 @@
-{
-  "quic-zig": {
-    "image": "l1ne/quic-zig:latest",
-    "url": "https://github.com/l1ne-company/quic-zig",
-    "role": "both"
-  }
-}
