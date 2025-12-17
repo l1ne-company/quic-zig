@@ -74,7 +74,12 @@ fn createModules(b: *std.Build, target: std.Build.ResolvedTarget) Modules {
     const crypto_module = b.addModule("quic-zig-crypto", .{
         .root_source_file = b.path("src/crypto/root.zig"),
         .target = target,
+        .link_libc = true,
     });
+
+    // Link liboqs for post-quantum cryptography
+    // System library should handle include paths automatically via pkg-config
+    crypto_module.linkSystemLibrary("oqs", .{});
 
     const utils_module = b.addModule("quic-zig-utils", .{
         .root_source_file = b.path("src/utils/root.zig"),

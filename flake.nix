@@ -35,6 +35,7 @@
         packages = [
           zigFromTarball
           pkgs.docker
+          pkgs.liboqs
           pkgs.docker-compose
           pkgs.openssl
           pkgs.python3
