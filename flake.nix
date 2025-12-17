@@ -1,7 +1,7 @@
 {
   description = "quic-zig";
 
-  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-24.05";
+  inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
   outputs = { self, nixpkgs }:
     let
@@ -35,6 +35,7 @@
         packages = [
           zigFromTarball
           pkgs.docker
+          pkgs.liboqs
           pkgs.docker-compose
           pkgs.openssl
           pkgs.python3

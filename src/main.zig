@@ -8,6 +8,7 @@ pub fn main() !void {
 
     try testUdp(allocator);
     try testFrameAndPacket(allocator);
+    try testKyberCrypto(allocator);
 }
 
 pub fn testUdp(allocator: std.mem.Allocator) !void {
@@ -87,5 +88,78 @@ pub fn testFrameAndPacket(allocator: std.mem.Allocator) !void {
         const len = try quic_zig.utils.VarInt.encode(value, &varint_buf);
         const result = try quic_zig.utils.VarInt.decode(varint_buf[0..len]);
         std.debug.print("   ✓ VarInt {d}: {d}-byte encoding -> {d}\n", .{ value, len, result.value });
+    }
+}
+
+pub fn testKyberCrypto(allocator: std.mem.Allocator) !void {
+    std.debug.print("\n4. Testing Post-Quantum Cryptography (ML-KEM)...\n", .{});
+
+    // Test ML-KEM-512 (NIST Level 1)
+    std.debug.print("\n   Testing ML-KEM-512 (NIST Level 1 - 128-bit security):\n", .{});
+    try testKyberLevel(allocator, .ML_KEM_512);
+
+    // Test ML-KEM-768 (NIST Level 3)
+    std.debug.print("\n   Testing ML-KEM-768 (NIST Level 3 - 192-bit security):\n", .{});
+    try testKyberLevel(allocator, .ML_KEM_768);
+
+    // Test ML-KEM-1024 (NIST Level 5)
+    std.debug.print("\n   Testing ML-KEM-1024 (NIST Level 5 - 256-bit security):\n", .{});
+    try testKyberLevel(allocator, .ML_KEM_1024);
+
+    std.debug.print("\n   ✓ Post-quantum cryptography test completed!\n", .{});
+}
+
+fn testKyberLevel(allocator: std.mem.Allocator, alg: quic_zig.crypto.MLKEM.Algorithm) !void {
+    // Initialize ML-KEM KEM
+    var kyber = try quic_zig.crypto.MLKEM.init(allocator, alg);
+    defer kyber.deinit();
+
+    // Get key sizes
+    const pk_size = kyber.publicKeySize();
+    const sk_size = kyber.secretKeySize();
+    const ct_size = kyber.ciphertextSize();
+    const ss_size = kyber.sharedSecretSize();
+
+    std.debug.print("      - Public key size: {d} bytes\n", .{pk_size});
+    std.debug.print("      - Secret key size: {d} bytes\n", .{sk_size});
+    std.debug.print("      - Ciphertext size: {d} bytes\n", .{ct_size});
+    std.debug.print("      - Shared secret size: {d} bytes\n", .{ss_size});
+
+    // ===== Server Side: Generate Keypair =====
+    std.debug.print("      \n      [Server] Generating keypair...\n", .{});
+    const keys = try kyber.keypair();
+    defer allocator.free(keys.public_key);
+    defer allocator.free(keys.secret_key);
+    std.debug.print("      ✓ Keypair generated\n", .{});
+
+    // ===== Client Side: Encapsulate =====
+    std.debug.print("      \n      [Client] Encapsulating with server's public key...\n", .{});
+    const encaps_result = try kyber.encapsulate(keys.public_key);
+    defer allocator.free(encaps_result.ciphertext);
+    defer allocator.free(encaps_result.shared_secret);
+    std.debug.print("      ✓ Encapsulation complete\n", .{});
+    std.debug.print("      - Shared secret (client side): {d} bytes\n", .{encaps_result.shared_secret.len});
+
+    // ===== Server Side: Decapsulate =====
+    std.debug.print("      \n      [Server] Decapsulating ciphertext with secret key...\n", .{});
+    const shared_secret_server = try kyber.decapsulate(keys.secret_key, encaps_result.ciphertext);
+    defer allocator.free(shared_secret_server);
+    std.debug.print("      ✓ Decapsulation complete\n", .{});
+    std.debug.print("      - Shared secret (server side): {d} bytes\n", .{shared_secret_server.len});
+
+    // ===== Verify Shared Secrets Match =====
+    std.debug.print("      \n      [Verification] Comparing shared secrets...\n", .{});
+    const secrets_match = std.mem.eql(u8, encaps_result.shared_secret, shared_secret_server);
+    std.debug.print("      ✓ Shared secrets match: {}\n", .{secrets_match});
+
+    // Print first 16 bytes of shared secret for visualization
+    std.debug.print("      - Shared secret (first 16 bytes):\n        ", .{});
+    for (encaps_result.shared_secret[0..@min(16, encaps_result.shared_secret.len)]) |byte| {
+        std.debug.print("{x:0>2} ", .{byte});
+    }
+    std.debug.print("\n", .{});
+
+    if (!secrets_match) {
+        return error.SharedSecretMismatch;
     }
 }
