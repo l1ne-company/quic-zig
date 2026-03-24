@@ -1,0 +1,9 @@
+.{
+    .name = .sniffer,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.15.1",
+    .dependencies = .{
+        .quic_zig = .{ .path = "../.." },
+    },
+    .paths = .{ "build.zig", "build.zig.zon", "src" },
+}
