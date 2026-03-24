@@ -16,10 +16,13 @@ pub const udp = @import("udp.zig");
 pub const UdpSocket = udp.UdpSocket;
 pub const RecvResult = udp.RecvResult;
 
-// Export QUIC packet, frame, and header types
+// Export QUIC packet, frame, header, and parser types
 pub const packet_module = @import("quic/packet.zig");
 pub const frame_module = @import("quic/frame.zig");
 pub const header_module = @import("quic/header.zig");
+pub const parser_module = @import("quic/parser.zig");
+pub const parseHeader = parser_module.parseHeader;
+pub const ParseResult = parser_module.ParseResult;
 
 pub const Packet = packet_module.Packet;
 pub const PacketProtection = packet_module.PacketProtection;
