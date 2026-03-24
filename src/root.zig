@@ -4,11 +4,11 @@
 //! Users can either import this for everything, or import specific modules.
 const std = @import("std");
 
-pub const core = @import("core/root.zig");
-pub const client = @import("client/root.zig");
-pub const server = @import("server/root.zig");
-pub const crypto = @import("crypto/root.zig");
-pub const utils = @import("utils/root.zig");
+pub const core = @import("core");
+pub const client = @import("client");
+pub const server = @import("server");
+pub const crypto = @import("crypto");
+pub const utils = @import("utils");
 
 pub const Connection = core.Connection;
 pub const Stream = core.Stream;
