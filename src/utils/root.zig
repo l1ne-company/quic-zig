@@ -49,6 +49,14 @@ pub const VarInt = struct {
         return 8;
     }
 
+    /// Return the number of bytes needed to encode a value as a VarInt
+    pub fn encodedSize(value: u64) usize {
+        if (value < 64) return 1;
+        if (value < 16384) return 2;
+        if (value < 1073741824) return 4;
+        return 8;
+    }
+
     /// Decode a variable-length integer per RFC 9000 Section 16
     /// Returns the decoded value and number of bytes read
     pub fn decode(buf: []const u8) !struct { value: u64, len: usize } {
